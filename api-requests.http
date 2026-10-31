@@ -1,0 +1,114 @@
+### NovaBank API — open this file in IntelliJ and click the green ▶ next to any request.
+### Run "Login as Rahul" first: the token is saved automatically and used by the rest.
+
+@base = http://localhost:8080
+
+### Login as Rahul (demo customer)
+POST {{base}}/api/auth/login
+Content-Type: application/json
+
+{ "email": "rahul@novabank.in", "password": "demo123" }
+
+> {% client.global.set("token", response.body.token); %}
+
+### My accounts  (copy an accountNo from here into the requests below)
+GET {{base}}/api/accounts/my
+Authorization: Bearer {{token}}
+
+### Recent transactions (dashboard)
+GET {{base}}/api/transactions/recent
+Authorization: Bearer {{token}}
+
+### Deposit
+POST {{base}}/api/transactions/deposit
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "accountNo": "PUT_ACCOUNT_NO_HERE", "amount": 2500, "mode": "UPI", "remark": "Pocket money" }
+
+### Withdraw
+POST {{base}}/api/transactions/withdraw
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "accountNo": "PUT_ACCOUNT_NO_HERE", "amount": 1000, "mode": "ATM" }
+
+### Beneficiary lookup
+GET {{base}}/api/accounts/lookup/PUT_OTHER_ACCOUNT_NO
+Authorization: Bearer {{token}}
+
+### Transfer (PIN 1234)
+POST {{base}}/api/transactions/transfer
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "fromAccountNo": "PUT_ACCOUNT_NO_HERE",
+  "toAccountNo": "PUT_OTHER_ACCOUNT_NO",
+  "amount": 1500,
+  "mode": "IMPS",
+  "remark": "Dinner",
+  "pin": "1234"
+}
+
+### Transaction history with filters
+GET {{base}}/api/transactions?type=DEPOSIT&page=0&size=10
+Authorization: Bearer {{token}}
+
+### Balance inquiry
+GET {{base}}/api/accounts/PUT_ACCOUNT_NO_HERE/balance
+Authorization: Bearer {{token}}
+
+### EMI calculator (public, no token)
+GET {{base}}/api/loans/emi-calculator?amount=500000&rate=11.5&tenure=36
+
+### Apply for a loan
+POST {{base}}/api/loans/apply
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "type": "PERSONAL",
+  "amount": 300000,
+  "tenureMonths": 24,
+  "monthlyIncome": 85000,
+  "purpose": "Home renovation",
+  "creditAccountNo": "PUT_ACCOUNT_NO_HERE"
+}
+
+### My loans
+GET {{base}}/api/loans/my
+Authorization: Bearer {{token}}
+
+### ================= ADMIN =================
+
+### Login as Admin
+POST {{base}}/api/auth/login
+Content-Type: application/json
+
+{ "email": "admin@novabank.in", "password": "admin123" }
+
+> {% client.global.set("adminToken", response.body.token); %}
+
+### Admin stats
+GET {{base}}/api/admin/stats
+Authorization: Bearer {{adminToken}}
+
+### Pending loans
+GET {{base}}/api/admin/loans?status=PENDING
+Authorization: Bearer {{adminToken}}
+
+### Approve loan 1
+PUT {{base}}/api/admin/loans/1/approve
+Authorization: Bearer {{adminToken}}
+
+### Reject loan 2
+PUT {{base}}/api/admin/loans/2/reject
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{ "reason": "Low credit score" }
+
+### All customers
+GET {{base}}/api/admin/users
+Authorization: Bearer {{adminToken}}

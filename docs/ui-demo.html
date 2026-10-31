@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NovaBank — Bank Management System (Demo)</title>
+<style>
+:root{
+  --bg:#f3f5fa; --card:#fff; --ink:#0f172a; --muted:#64748b; --line:#e5e9f2;
+  --pri:#1d4ed8; --pri-d:#1e3a8a; --pri-l:#e8efff;
+  --green:#059669; --green-l:#e6f7f0; --red:#dc2626; --red-l:#fdecec;
+  --amber:#d97706; --amber-l:#fdf3e2; --violet:#7c3aed; --violet-l:#f1eafe;
+  --r:12px; --sh:0 1px 2px rgba(15,23,42,.04),0 4px 16px rgba(15,23,42,.05);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5}
+a{color:var(--pri);text-decoration:none}
+h1{font-size:22px;font-weight:700;letter-spacing:-.01em}
+h2{font-size:22px;font-weight:700;margin-bottom:4px}
+h3{font-size:15px;font-weight:650}
+.muted{color:var(--muted)} .center{text-align:center} .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px}
+.err{color:var(--red);font-size:13px;min-height:18px;margin:4px 0 8px}
+.hidden{display:none!important}
+
+/* layout */
+.layout{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+.side{background:#0b1736;color:#cbd5e1;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+.brand{display:flex;align-items:center;gap:10px;padding:22px 20px;font-weight:800;font-size:18px;color:#fff;letter-spacing:-.01em}
+.logo{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#3b82f6,#7c3aed);display:grid;place-items:center;font-size:15px;color:#fff}
+.side nav{padding:6px 12px;flex:1;overflow:auto}
+.side nav .sec{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#64748b;padding:14px 10px 6px}
+.side nav a{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;color:#cbd5e1;margin-bottom:2px;font-weight:500}
+.side nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.side nav a.active{background:#1d4ed8;color:#fff}
+.ic{width:20px;text-align:center;font-size:15px}
+.side-foot{padding:14px;border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:10px}
+.avatar{width:34px;height:34px;border-radius:50%;background:#334155;color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px;flex-shrink:0}
+.side-foot .who{flex:1;min-width:0}
+.side-foot .who b{display:block;color:#fff;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.side-foot .who span{font-size:11.5px;color:#94a3b8}
+.logout{background:none;border:1px solid rgba(255,255,255,.15);color:#cbd5e1;border-radius:7px;padding:5px 9px;cursor:pointer;font-size:12px}
+.logout:hover{background:rgba(255,255,255,.08)}
+.main{min-width:0}
+.demo-bar{background:#fff7e6;color:#8a5a00;font-size:12.5px;padding:7px 28px;border-bottom:1px solid #f5e1b8}
+.topbar{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;padding:24px 28px 8px}
+.topbar .sub{color:var(--muted);margin-top:2px}
+.api-pills{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;max-width:560px}
+.api{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);border-radius:6px;padding:3px 8px 3px 3px;font-family:ui-monospace,Menlo,monospace;font-size:11.5px;color:#334155;white-space:nowrap}
+.api i{font-style:normal;font-weight:700;font-size:10px;padding:2px 6px;border-radius:4px;color:#fff}
+.m-GET{background:#059669}.m-POST{background:#1d4ed8}.m-PUT{background:#d97706}.m-DELETE{background:#dc2626}.m-PATCH{background:#7c3aed}
+.content{padding:16px 28px 40px}
+
+/* grid + cards */
+.grid{display:grid;gap:16px;margin-bottom:16px}
+.g4{grid-template-columns:repeat(4,1fr)} .g3{grid-template-columns:repeat(3,1fr)} .g2{grid-template-columns:1fr 1fr}
+.g2-1{grid-template-columns:2fr 1fr} .g1-2{grid-template-columns:1fr 2fr} .g3-2{grid-template-columns:3fr 2fr}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);padding:20px;min-width:0}
+.card-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px;flex-wrap:wrap}
+.stat{position:relative;overflow:hidden}
+.stat .lbl{color:var(--muted);font-size:12.5px;font-weight:500}
+.stat .val{font-size:24px;font-weight:750;margin:6px 0 2px;letter-spacing:-.02em}
+.stat .hint{font-size:12px;color:var(--muted)}
+.stat .dot{position:absolute;right:16px;top:16px;width:36px;height:36px;border-radius:10px;display:grid;place-items:center;font-size:16px}
+.c-blue{background:var(--pri-l);color:var(--pri)} .c-green{background:var(--green-l);color:var(--green)}
+.c-red{background:var(--red-l);color:var(--red)} .c-amber{background:var(--amber-l);color:var(--amber)} .c-violet{background:var(--violet-l);color:var(--violet)}
+
+/* account cards */
+.acct-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.acct{border-radius:14px;padding:18px;color:#fff;background:linear-gradient(135deg,#1d4ed8,#4338ca);position:relative;overflow:hidden;min-height:150px;display:flex;flex-direction:column;justify-content:space-between}
+.acct.CURRENT{background:linear-gradient(135deg,#0f766e,#0e7490)}
+.acct.FROZEN{background:linear-gradient(135deg,#64748b,#475569)}
+.acct::after{content:"";position:absolute;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.08);right:-60px;top:-70px}
+.acct .t{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;opacity:.85}
+.acct .b{font-size:24px;font-weight:750;letter-spacing:-.02em}
+.acct .n{font-family:ui-monospace,Menlo,monospace;font-size:13px;opacity:.9;letter-spacing:.06em}
+.acct .row{display:flex;justify-content:space-between;align-items:flex-end}
+
+/* quick actions */
+.qa{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.qa a{display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 8px;border:1px solid var(--line);border-radius:10px;color:var(--ink);font-weight:550;font-size:13px}
+.qa a:hover{border-color:var(--pri);background:var(--pri-l)}
+.qa .q{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;font-size:17px}
+
+/* tables */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap;background:#fafbfd}
+td{padding:11px 12px;border-bottom:1px solid #f0f2f7;vertical-align:middle;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+.acts .btn{margin-right:4px}
+tbody tr:hover{background:#fafbff}
+.amt-cr{color:var(--green);font-weight:650} .amt-dr{color:var(--red);font-weight:650}
+.empty{padding:30px;text-align:center;color:var(--muted)}
+
+.badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:650;letter-spacing:.02em}
+.b-green{background:var(--green-l);color:var(--green)} .b-red{background:var(--red-l);color:var(--red)}
+.b-amber{background:var(--amber-l);color:var(--amber)} .b-blue{background:var(--pri-l);color:var(--pri)}
+.b-gray{background:#eef1f6;color:#475569} .b-violet{background:var(--violet-l);color:var(--violet)}
+
+/* forms */
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12.5px;font-weight:600;color:#334155;margin-bottom:6px}
+input,select,textarea{width:100%;padding:10px 12px;border:1px solid #d6dce8;border-radius:8px;font:inherit;background:#fff;color:var(--ink);outline:none;transition:border .15s,box-shadow .15s}
+input:focus,select:focus,textarea:focus{border-color:var(--pri);box-shadow:0 0 0 3px rgba(29,78,216,.12)}
+input[type=range]{padding:0;border:none;box-shadow:none;accent-color:var(--pri)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.help{font-size:12px;color:var(--muted);margin-top:5px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 16px;border-radius:8px;border:1px solid transparent;font:inherit;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn-primary{background:var(--pri);color:#fff} .btn-primary:hover{background:var(--pri-d)}
+.btn-ghost{background:#fff;border-color:#d6dce8;color:#334155} .btn-ghost:hover{background:#f6f8fc}
+.btn-danger{background:var(--red);color:#fff} .btn-danger:hover{background:#b91c1c}
+.btn-success{background:var(--green);color:#fff} .btn-success:hover{background:#047857}
+.btn-sm{padding:5px 10px;font-size:12.5px;border-radius:7px}
+.btn-block{width:100%}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.chip{border:1px solid #d6dce8;background:#fff;border-radius:999px;padding:4px 11px;font-size:12.5px;cursor:pointer;font:inherit;font-size:12.5px;color:#334155}
+.chip:hover,.chip.on{border-color:var(--pri);color:var(--pri);background:var(--pri-l)}
+.tabs{display:inline-flex;background:#e9edf5;border-radius:10px;padding:4px;margin-bottom:18px}
+.tabs button{border:none;background:none;padding:8px 18px;border-radius:7px;font:inherit;font-weight:600;color:#475569;cursor:pointer}
+.tabs button.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.filters{display:grid;grid-template-columns:repeat(5,1fr) auto;gap:10px;align-items:end;margin-bottom:14px}
+.filters .field{margin:0}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:8px 18px;font-size:13.5px}
+.kv dt{color:var(--muted)} .kv dd{font-weight:600;text-align:right}
+.info-list li{list-style:none;display:flex;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line);font-size:13px}
+.info-list li:last-child{border:none}
+.ben-ok{color:var(--green);font-size:12.5px;margin-top:5px;font-weight:600}
+.ben-bad{color:var(--red);font-size:12.5px;margin-top:5px;font-weight:600}
+.pager{display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:13px;color:var(--muted)}
+.pager .btns{display:flex;gap:6px}
+
+/* chart */
+.chart{display:flex;align-items:flex-end;gap:14px;height:180px;padding-top:10px}
+.chart .col{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%}
+.chart .bars{flex:1;display:flex;align-items:flex-end;gap:4px;width:100%;justify-content:center}
+.chart .bar{width:14px;border-radius:4px 4px 0 0;min-height:2px}
+.chart .bar.cr{background:#3b82f6} .chart .bar.dr{background:#cbd5e1}
+.chart .m{font-size:11.5px;color:var(--muted)}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--muted)}
+.legend span::before{content:"";display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.legend .l1::before{background:#3b82f6}.legend .l2::before{background:#cbd5e1}
+
+/* balance */
+.bal-hero{background:linear-gradient(135deg,#0b1736,#1d4ed8);color:#fff;border-radius:16px;padding:26px;position:relative;overflow:hidden}
+.bal-hero .big{font-size:38px;font-weight:800;letter-spacing:-.03em;margin:6px 0}
+.bal-hero .sm{opacity:.8;font-size:13px}
+.bal-hero .split{display:flex;gap:30px;margin-top:18px;flex-wrap:wrap}
+.bal-hero .split b{display:block;font-size:17px}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* emi */
+.emi-box{background:linear-gradient(135deg,#f1eafe,#e8efff);border-radius:12px;padding:18px;margin:6px 0 16px}
+.emi-box .e{font-size:28px;font-weight:800;color:var(--violet);letter-spacing:-.02em}
+.emi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;font-size:12.5px}
+.emi-grid b{display:block;font-size:14.5px;color:var(--ink)}
+.elig{margin-top:10px;font-size:12.5px;font-weight:600}
+.range-val{float:right;font-weight:700;color:var(--pri)}
+
+/* auth */
+.auth{display:grid;grid-template-columns:1.1fr 1fr;min-height:100vh}
+.auth-hero{background:linear-gradient(150deg,#0b1736 0%,#1d4ed8 60%,#7c3aed 100%);color:#fff;padding:56px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden}
+.auth-hero::before{content:"";position:absolute;width:420px;height:420px;border-radius:50%;border:60px solid rgba(255,255,255,.05);right:-140px;bottom:-140px}
+.auth-hero h1{font-size:38px;line-height:1.15;margin:30px 0 14px;letter-spacing:-.03em}
+.auth-hero p{opacity:.85;max-width:420px;font-size:15px}
+.feat{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:34px;max-width:460px}
+.feat div{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:12px;font-size:13px}
+.feat b{display:block;font-size:14px;margin-bottom:2px}
+.stack{display:flex;gap:6px;flex-wrap:wrap;margin-top:26px}
+.stack span{font-size:11.5px;background:rgba(255,255,255,.12);border-radius:999px;padding:3px 10px}
+.auth-panel{display:grid;place-items:center;padding:40px 24px}
+.auth-card{width:100%;max-width:400px}
+.auth-card h2{margin-bottom:4px}
+.auth-card > .muted{margin-bottom:22px}
+.demo-creds{display:flex;align-items:center;gap:6px;margin:14px 0;flex-wrap:wrap;font-size:12.5px}
+.api-foot{margin-top:18px;display:flex;justify-content:center;gap:6px;flex-wrap:wrap}
+
+/* modal + toast */
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.5);display:grid;place-items:center;z-index:50;padding:20px;animation:fi .15s}
+.modal-box{background:#fff;border-radius:14px;max-width:520px;width:100%;max-height:88vh;overflow:auto;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.25);animation:pu .18s}
+.modal-box.wide{max-width:760px}
+.modal-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.x{background:none;border:none;font-size:22px;cursor:pointer;color:var(--muted);line-height:1}
+.modal-f{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}
+.receipt{text-align:center}
+.receipt .tick{width:64px;height:64px;border-radius:50%;background:var(--green-l);color:var(--green);display:grid;place-items:center;font-size:30px;margin:0 auto 12px}
+.receipt .ramt{font-size:30px;font-weight:800;letter-spacing:-.02em;margin:4px 0 16px}
+.receipt .kv{text-align:left;background:#f8fafc;border-radius:10px;padding:14px}
+.pin{letter-spacing:.6em;text-align:center;font-size:20px;font-weight:700}
+@keyframes fi{from{opacity:0}} @keyframes pu{from{transform:translateY(10px);opacity:0}}
+#toast{position:fixed;right:20px;bottom:20px;display:flex;flex-direction:column;gap:8px;z-index:60}
+.tst{background:#0f172a;color:#fff;padding:11px 16px;border-radius:10px;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.2);animation:pu .2s;max-width:360px;border-left:4px solid #3b82f6}
+.tst.ok{border-color:#10b981}.tst.bad{border-color:#ef4444}
+
+/* api docs */
+.ep{display:grid;grid-template-columns:72px 1fr auto;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid #f0f2f7}
+.ep:last-child{border:none}
+.ep .meth{font-family:ui-monospace,Menlo,monospace;font-size:11px;font-weight:700;color:#fff;border-radius:5px;padding:4px 0;text-align:center}
+.ep code{font-family:ui-monospace,Menlo,monospace;font-size:13px;font-weight:600}
+.ep .d{color:var(--muted);font-size:12.5px}
+
+@media (max-width:1100px){.g4{grid-template-columns:1fr 1fr}.filters{grid-template-columns:1fr 1fr 1fr}}
+@media (max-width:900px){
+  .layout{grid-template-columns:1fr}
+  .side{position:static;height:auto}
+  .side nav{display:flex;overflow-x:auto;padding:0 10px 10px;gap:4px}
+  .side nav .sec{display:none}
+  .side nav a{white-space:nowrap}
+  .side-foot{display:none}
+  .g3,.g2,.g2-1,.g1-2,.g3-2{grid-template-columns:1fr}
+  .auth{grid-template-columns:1fr}.auth-hero{padding:32px}
+  .topbar,.content{padding-left:16px;padding-right:16px}
+}
+@media (max-width:560px){.g4,.row2,.filters{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toast"></div>
+<div id="modal" class="modal hidden" onclick="if(event.target===this)closeModal()"><div class="modal-box" id="modalBox"></div></div>
+
+<script>
+/* ============================================================
+   NovaBank — Bank Management System (frontend demo)
+   Every action here maps to a Spring Boot REST endpoint (see "API Reference" page).
+   Data is in-memory, so a page refresh resets it.
+   ============================================================ */
+
+const $ = s => document.querySelector(s);
+const fmt = n => new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:2}).format(n);
+const fmt0 = n => new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:0}).format(n);
+const sum = a => a.reduce((x,y)=>x+y,0);
+const dt = iso => new Date(iso).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+const dtt = iso => new Date(iso).toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const CREDIT = ['DEPOSIT','TRANSFER_IN','LOAN_CREDIT','INTEREST'];
+const isCredit = t => CREDIT.includes(t.type);
+const MIN_BAL = {SAVINGS:1000, CURRENT:5000};
+const DAILY_WITHDRAW = 50000;
+const LOAN_TYPES = {PERSONAL:{label:'Personal Loan',rate:11.5,max:1500000},HOME:{label:'Home Loan',rate:8.5,max:10000000},CAR:{label:'Car Loan',rate:9.2,max:2000000},EDUCATION:{label:'Education Loan',rate:7.9,max:3000000}};
+
+/* ---------------- seed data (what MySQL would hold) ---------------- */
+const S = {
+  user:null, seq:5000, pin:'1234',
+  users:[
+    {id:1,name:'Rahul Sharma',email:'rahul@novabank.in',password:'demo123',role:'CUSTOMER',phone:'+91 98765 43210',city:'Patna',joined:'2025-04-12'},
+    {id:2,name:'Bank Admin',email:'admin@novabank.in',password:'admin123',role:'ADMIN',phone:'+91 90000 00001',city:'Mumbai',joined:'2024-01-01'},
+    {id:3,name:'Priya Verma',email:'priya@novabank.in',password:'demo123',role:'CUSTOMER',phone:'+91 99887 76655',city:'Pune',joined:'2025-06-20'},
+    {id:4,name:'Amit Kumar',email:'amit@novabank.in',password:'demo123',role:'CUSTOMER',phone:'+91 91234 56789',city:'Delhi',joined:'2026-02-08'},
+  ],
+  accounts:[
+    {no:'NB10023451',userId:1,type:'SAVINGS',balance:84250.50,status:'ACTIVE',opened:'2025-04-12',ifsc:'NOVA0001023',branch:'Patna Main',nominee:'Sunita Sharma'},
+    {no:'NB10023978',userId:1,type:'CURRENT',balance:215400.00,status:'ACTIVE',opened:'2025-09-03',ifsc:'NOVA0001023',branch:'Patna Main',nominee:'Sunita Sharma'},
+    {no:'NB10031207',userId:3,type:'SAVINGS',balance:56300.00,status:'ACTIVE',opened:'2025-06-20',ifsc:'NOVA0002041',branch:'Pune Camp',nominee:'—'},
+    {no:'NB10034589',userId:4,type:'SAVINGS',balance:12950.00,status:'ACTIVE',opened:'2026-02-08',ifsc:'NOVA0000310',branch:'Connaught Place',nominee:'—'},
+    {no:'NB10034590',userId:4,type:'CURRENT',balance:4000.00,status:'FROZEN',opened:'2026-03-15',ifsc:'NOVA0000310',branch:'Connaught Place',nominee:'—'},
+  ],
+  txns:[], loans:[],
+  ui:{dwTab:'deposit',hist:{acc:'',type:'',from:'',to:'',q:'',page:1},balAcc:null}
+};
+(function seed(){
+  const T=(d,acc,type,amt,desc,mode)=>S.txns.push({id:'TXN'+(++S.seq),date:d,accNo:acc,type,amount:amt,balanceAfter:0,desc,mode});
+  T('2026-05-03T10:12:00','NB10023451','DEPOSIT',45000,'Salary — Infotech Pvt Ltd','NEFT');
+  T('2026-05-09T18:40:00','NB10023451','WITHDRAW',6000,'ATM withdrawal','ATM');
+  T('2026-05-21T13:05:00','NB10023451','TRANSFER_OUT',12000,'Rent — May','IMPS');
+  T('2026-06-02T10:01:00','NB10023451','DEPOSIT',45000,'Salary — Infotech Pvt Ltd','NEFT');
+  T('2026-06-15T16:22:00','NB10023978','DEPOSIT',80000,'Client payment — Wayora','RTGS');
+  T('2026-06-22T12:00:00','NB10023451','TRANSFER_OUT',12000,'Rent — June','IMPS');
+  T('2026-07-02T10:03:00','NB10023451','DEPOSIT',45000,'Salary — Infotech Pvt Ltd','NEFT');
+  T('2026-07-11T19:15:00','NB10023451','WITHDRAW',8500,'Cash withdrawal — branch','CASH');
+  T('2026-07-28T09:30:00','NB10023978','TRANSFER_OUT',35000,'Vendor payment','NEFT');
+  T('2026-08-02T10:00:00','NB10023451','DEPOSIT',45000,'Salary — Infotech Pvt Ltd','NEFT');
+  T('2026-08-14T14:45:00','NB10023451','TRANSFER_OUT',14052.09,'Personal loan EMI','AUTO');
+  T('2026-08-30T11:11:00','NB10023978','DEPOSIT',62000,'Client payment','IMPS');
+  T('2026-09-02T10:05:00','NB10023451','DEPOSIT',45000,'Salary — Infotech Pvt Ltd','NEFT');
+  T('2026-09-14T14:45:00','NB10023451','TRANSFER_OUT',14052.09,'Personal loan EMI','AUTO');
+  T('2026-09-30T23:59:00','NB10023451','INTEREST',612.40,'Quarterly savings interest','SYSTEM');
+  T('2026-10-01T10:02:00','NB10023451','DEPOSIT',45000,'Salary — Infotech Pvt Ltd','NEFT');
+  T('2026-10-05T17:20:00','NB10023451','TRANSFER_OUT',5000,'To Priya Verma','UPI');
+  T('2026-10-05T17:20:00','NB10031207','TRANSFER_IN',5000,'From Rahul Sharma','UPI');
+  T('2026-10-12T20:10:00','NB10023451','WITHDRAW',4000,'ATM withdrawal','ATM');
+  T('2026-10-14T14:45:00','NB10023451','TRANSFER_OUT',14052.09,'Personal loan EMI','AUTO');
+  T('2026-10-18T12:30:00','NB10023978','DEPOSIT',48500,'Client payment','NEFT');
+  T('2026-10-24T15:00:00','NB10034589','DEPOSIT',10000,'Cash deposit','CASH');
+  T('2026-10-27T11:45:00','NB10023978','WITHDRAW',20000,'Office supplies','CHEQUE');
+  T('2026-10-29T09:15:00','NB10031207','WITHDRAW',2500,'ATM withdrawal','ATM');
+  // compute running balances backwards from current balance
+  S.accounts.forEach(a=>{
+    let b=a.balance;
+    S.txns.filter(t=>t.accNo===a.no).sort((x,y)=>y.date.localeCompare(x.date)).forEach(t=>{t.balanceAfter=+b.toFixed(2); b += isCredit(t)?-t.amount:t.amount;});
+  });
+  S.txns.sort((x,y)=>y.date.localeCompare(x.date));
+  S.loans=[
+    {id:'LN1001',userId:1,type:'PERSONAL',amount:300000,tenure:24,rate:11.5,income:85000,purpose:'Home renovation',status:'APPROVED',applied:'2025-11-02',decided:'2025-11-05'},
+    {id:'LN1002',userId:1,type:'CAR',amount:650000,tenure:60,rate:9.2,income:85000,purpose:'New car purchase',status:'PENDING',applied:'2026-10-20'},
+    {id:'LN1003',userId:3,type:'HOME',amount:2500000,tenure:240,rate:8.5,income:140000,purpose:'Flat in Pune',status:'PENDING',applied:'2026-10-26'},
+    {id:'LN1004',userId:4,type:'EDUCATION',amount:400000,tenure:48,rate:7.9,income:22000,purpose:'MBA fees',status:'REJECTED',applied:'2026-08-11',decided:'2026-08-14',reason:'Income below eligibility'},
+  ].map(l=>({...l,emi:emi(l.amount,l.rate,l.tenure)}));
+})();
+
+/* ---------------- helpers ---------------- */
+function emi(P,rate,n){const r=rate/12/100; if(!r) return P/n; const f=Math.pow(1+r,n); return +(P*r*f/(f-1)).toFixed(2);}
+const acc = no => S.accounts.find(a=>a.no===no);
+const userOf = id => S.users.find(u=>u.id===id);
+const myAccs = () => S.accounts.filter(a=>a.userId===S.user.id && a.status!=='CLOSED');
+const myTxns = () => { const nos=myAccs().map(a=>a.no); return S.txns.filter(t=>nos.includes(t.accNo)); };
+const myLoans = () => S.loans.filter(l=>l.userId===S.user.id);
+const initials = n => n.split(' ').map(x=>x[0]).join('').slice(0,2).toUpperCase();
+const mask = no => 'XXXX '+no.slice(-4);
+function addTxn(accNo,type,amount,desc,mode){
+  const a=acc(accNo); a.balance=+(a.balance+(CREDIT.includes(type)?amount:-amount)).toFixed(2);
+  const t={id:'TXN'+(++S.seq),date:new Date().toISOString(),accNo,type,amount,balanceAfter:a.balance,desc,mode};
+  S.txns.unshift(t); return t;
+}
+function toast(msg,kind=''){const el=document.createElement('div');el.className='tst '+kind;el.innerHTML=msg;$('#toast').appendChild(el);setTimeout(()=>el.remove(),3200);}
+function openModal(html,wide){$('#modalBox').className='modal-box'+(wide?' wide':'');$('#modalBox').innerHTML=html;$('#modal').classList.remove('hidden');}
+function closeModal(){$('#modal').classList.add('hidden');}
+const field=(l,inp,help='')=>`<div class="field"><label>${l}</label>${inp}${help?`<div class="help">${help}</div>`:''}</div>`;
+const apiPill=s=>{const [m,...p]=s.split(' ');return `<span class="api"><i class="m-${m}">${m}</i>${p.join(' ')}</span>`;};
+const stat=(l,v,h,c,ic)=>`<div class="card stat"><div class="dot c-${c}">${ic}</div><div class="lbl">${l}</div><div class="val">${v}</div><div class="hint">${h}</div></div>`;
+const statusBadge=s=>`<span class="badge ${({ACTIVE:'b-green',APPROVED:'b-green',SUCCESS:'b-green',FROZEN:'b-gray',CLOSED:'b-gray',PENDING:'b-amber',REJECTED:'b-red'})[s]||'b-gray'}">${s}</span>`;
+const typeBadge=t=>`<span class="badge ${isCredit({type:t})?'b-green':'b-red'}">${t.replace('_',' ')}</span>`;
+const accOptions=(sel,onlyActive=true)=>myAccs().filter(a=>!onlyActive||a.status==='ACTIVE').map(a=>`<option value="${a.no}" ${a.no===sel?'selected':''}>${a.type} · ${a.no} · ${fmt(a.balance)}</option>`).join('');
+function modalHead(t){return `<div class="modal-h"><h3>${t}</h3><button class="x" onclick="closeModal()">×</button></div>`;}
+
+function txnTable(list,showAcc=true){
+  if(!list.length) return `<div class="empty">No transactions found</div>`;
+  return `<div class="tbl-wrap"><table><thead><tr><th>Txn ID</th><th>Date</th>${showAcc?'<th>Account</th>':''}<th>Description</th><th>Type</th><th>Mode</th><th style="text-align:right">Amount</th><th style="text-align:right">Balance</th></tr></thead><tbody>
+  ${list.map(t=>`<tr><td class="mono">${t.id}</td><td>${dtt(t.date)}</td>${showAcc?`<td class="mono">${mask(t.accNo)}</td>`:''}<td>${esc(t.desc)}</td><td>${typeBadge(t.type)}</td><td class="muted">${t.mode||'—'}</td>
+  <td style="text-align:right" class="${isCredit(t)?'amt-cr':'amt-dr'}">${isCredit(t)?'+':'−'} ${fmt(t.amount)}</td><td style="text-align:right">${fmt(t.balanceAfter)}</td></tr>`).join('')}
+  </tbody></table></div>`;
+}
+function acctCard(a){
+  return `<div class="acct ${a.type} ${a.status==='FROZEN'?'FROZEN':''}"><div class="row"><span class="t">${a.type} account</span>${a.status!=='ACTIVE'?`<span class="badge" style="background:rgba(255,255,255,.2);color:#fff">${a.status}</span>`:'<span>◆</span>'}</div>
+  <div><div style="font-size:12px;opacity:.75">Available balance</div><div class="b">${fmt(a.balance)}</div></div>
+  <div class="row"><span class="n">${a.no.replace(/(.{4})/g,'$1 ').trim()}</span><span style="font-size:12px;opacity:.8">${a.ifsc}</span></div></div>`;
+}
+
+/* ---------------- navigation ---------------- */
+const CUST_NAV=[
+  {sec:'Banking'},
+  {id:'dashboard',ic:'▦',label:'Dashboard'},
+  {id:'accounts',ic:'◫',label:'My Accounts'},
+  {id:'balance',ic:'◉',label:'Balance Inquiry'},
+  {sec:'Payments'},
+  {id:'deposit',ic:'⇅',label:'Deposit / Withdraw'},
+  {id:'transfer',ic:'⇄',label:'Money Transfer'},
+  {id:'history',ic:'≡',label:'Transaction History'},
+  {sec:'Credit'},
+  {id:'loans',ic:'₹',label:'Loans'},
+  {sec:'Settings'},
+  {id:'profile',ic:'☺',label:'Profile & Security'},
+  {id:'apis',ic:'⌘',label:'API Reference'},
+];
+const ADMIN_NAV=[
+  {sec:'Admin'},
+  {id:'admin',ic:'▦',label:'Admin Dashboard'},
+  {id:'approvals',ic:'✓',label:'Loan Approvals'},
+  {id:'customers',ic:'☷',label:'Customers'},
+  {id:'alltxns',ic:'≡',label:'All Transactions'},
+  {sec:'Settings'},
+  {id:'profile',ic:'☺',label:'Profile & Security'},
+  {id:'apis',ic:'⌘',label:'API Reference'},
+];
+const home=()=>S.user.role==='ADMIN'?'admin':'dashboard';
+
+function render(){
+  let r=(location.hash.slice(1)||'login');
+  const pub=['login','register'];
+  if(!S.user && !pub.includes(r)) r='login';
+  if(S.user && pub.includes(r)) r=home();
+  if(S.user){const nav=S.user.role==='ADMIN'?ADMIN_NAV:CUST_NAV; if(!nav.some(n=>n.id===r)) r=home();}
+  if(('#'+r)!==location.hash){try{history.replaceState(null,'','#'+r);}catch(e){}}
+  if(!S.user){ $('#app').innerHTML = r==='register'?pageRegister():pageLogin(); window.scrollTo(0,0); return; }
+  const P=PAGES[r]();
+  const nav=S.user.role==='ADMIN'?ADMIN_NAV:CUST_NAV;
+  $('#app').innerHTML=`<div class="layout">
+    <aside class="side"><div class="brand"><div class="logo">◆</div>NovaBank</div>
+      <nav>${nav.map(n=>n.sec?`<div class="sec">${n.sec}</div>`:`<a href="#${n.id}" class="${n.id===r?'active':''}"><span class="ic">${n.ic}</span>${n.label}</a>`).join('')}</nav>
+      <div class="side-foot"><div class="avatar">${initials(S.user.name)}</div><div class="who"><b>${esc(S.user.name)}</b><span>${S.user.role}</span></div><button class="logout" onclick="logout()">Logout</button></div>
+    </aside>
+    <main class="main">
+      <div class="demo-bar">Demo mode · data is in-memory (resets on refresh) · Transaction PIN: <b>1234</b> · each page shows the Spring Boot APIs it calls →</div>
+      <header class="topbar"><div><h1>${P.title}</h1><p class="sub">${P.sub||''}</p></div><div class="api-pills">${(P.api||[]).map(apiPill).join('')}</div></header>
+      <section class="content">${P.html}</section>
+    </main></div>`;
+  P.after&&P.after();
+  window.scrollTo(0,0);
+}
+window.addEventListener('hashchange',render);
+const go=r=>{location.hash='#'+r;};
+
+/* ---------------- AUTH ---------------- */
+function authHero(){return `<div style="position:relative;z-index:1"><div class="brand" style="padding:0"><div class="logo">◆</div>NovaBank</div>
+  <h1>Banking that's simple,<br>secure and instant.</h1><p>Open accounts, move money, apply for loans and track every rupee — all from one dashboard.</p>
+  <div class="feat"><div><b>Instant transfers</b>IMPS · NEFT · RTGS</div><div><b>Smart loans</b>Live EMI & eligibility</div><div><b>JWT security</b>Role-based access</div><div><b>Full history</b>Filter & export CSV</div></div></div>
+  <div class="stack" style="position:relative;z-index:1">${['Java 17','Spring Boot 3','Spring Security + JWT','MySQL','React','JUnit 5','Docker'].map(s=>`<span>${s}</span>`).join('')}</div>`;}
+function pageLogin(){return `<div class="auth"><div class="auth-hero">${authHero()}</div><div class="auth-panel">
+  <form class="auth-card" onsubmit="doLogin(event)"><h2>Sign in</h2><p class="muted">Welcome back! Log in to your account.</p>
+  ${field('Email address','<input id="lEmail" type="email" required value="rahul@novabank.in">')}
+  ${field('Password','<input id="lPass" type="password" required value="demo123">')}
+  <div id="lErr" class="err"></div>
+  <button class="btn btn-primary btn-block">Sign in</button>
+  <div class="demo-creds"><span class="muted">Demo login as:</span><button type="button" class="chip" onclick="fillLogin('rahul@novabank.in','demo123')">Customer</button><button type="button" class="chip" onclick="fillLogin('admin@novabank.in','admin123')">Admin</button></div>
+  <p class="muted center">New to NovaBank? <a href="#register">Open an account</a></p>
+  <div class="api-foot">${apiPill('POST /api/auth/login')}</div></form></div></div>`;}
+function fillLogin(e,p){$('#lEmail').value=e;$('#lPass').value=p;}
+function doLogin(ev){ev.preventDefault();
+  const u=S.users.find(x=>x.email.toLowerCase()===$('#lEmail').value.trim().toLowerCase());
+  if(!u||u.password!==$('#lPass').value){$('#lErr').textContent='Invalid email or password (401 Unauthorized)';return;}
+  S.user=u; toast(`Welcome, ${u.name.split(' ')[0]}! JWT token issued.`,'ok'); go(home()); render();
+}
+function logout(){S.user=null;toast('Logged out — token cleared');go('login');}
+function pageRegister(){return `<div class="auth"><div class="auth-hero">${authHero()}</div><div class="auth-panel">
+  <form class="auth-card" onsubmit="doRegister(event)" style="max-width:440px"><h2>Open an account</h2><p class="muted">Takes less than 2 minutes.</p>
+  ${field('Full name','<input id="rName" required placeholder="As per PAN">')}
+  <div class="row2">${field('Email','<input id="rEmail" type="email" required placeholder="you@email.com">')}${field('Mobile','<input id="rPhone" required placeholder="+91" pattern="[0-9+ ]{10,15}">')}</div>
+  <div class="row2">${field('Password','<input id="rPass" type="password" required minlength="6">','Min 6 characters')}${field('Confirm password','<input id="rPass2" type="password" required>')}</div>
+  <div class="row2">${field('Account type','<select id="rType"><option value="SAVINGS">Savings</option><option value="CURRENT">Current</option></select>')}${field('Initial deposit (₹)','<input id="rDep" type="number" min="1000" value="5000" required>','Min ₹1,000')}</div>
+  <div id="rErr" class="err"></div>
+  <button class="btn btn-primary btn-block">Create account</button>
+  <p class="muted center" style="margin-top:14px">Already a customer? <a href="#login">Sign in</a></p>
+  <div class="api-foot">${apiPill('POST /api/auth/register')}${apiPill('POST /api/accounts')}</div></form></div></div>`;}
+function doRegister(ev){ev.preventDefault();
+  const email=$('#rEmail').value.trim(), err=m=>$('#rErr').textContent=m;
+  if($('#rPass').value!==$('#rPass2').value) return err('Passwords do not match');
+  if(S.users.some(u=>u.email.toLowerCase()===email.toLowerCase())) return err('Email already registered (409 Conflict)');
+  const type=$('#rType').value, dep=+$('#rDep').value;
+  if(dep<MIN_BAL[type]) return err(`Minimum opening deposit for ${type} is ${fmt0(MIN_BAL[type])}`);
+  const u={id:S.users.length+1,name:$('#rName').value.trim(),email,password:$('#rPass').value,role:'CUSTOMER',phone:$('#rPhone').value,city:'—',joined:new Date().toISOString().slice(0,10)};
+  S.users.push(u);
+  const no='NB1'+String(Math.floor(Math.random()*9e6)+1e6);
+  S.accounts.push({no,userId:u.id,type,balance:0,status:'ACTIVE',opened:u.joined,ifsc:'NOVA0001023',branch:'Online',nominee:'—'});
+  addTxn(no,'DEPOSIT',dep,'Account opening deposit','ONLINE');
+  S.user=u; toast(`Account ${no} created 🎉`,'ok'); go('dashboard'); render();
+}
+
+/* ---------------- PAGES ---------------- */
+const PAGES={};
+
+PAGES.dashboard=()=>{
+  const accs=myAccs(), total=sum(accs.map(a=>a.balance)), txns=myTxns();
+  const month=new Date().toISOString().slice(0,7), mt=txns.filter(t=>t.date.startsWith(month));
+  const cr=sum(mt.filter(isCredit).map(t=>t.amount)), dr=sum(mt.filter(t=>!isCredit(t)).map(t=>t.amount));
+  const loans=myLoans().filter(l=>l.status==='APPROVED');
+  const h=new Date().getHours(), greet=h<12?'Good morning':h<17?'Good afternoon':'Good evening';
+  // last 6 months chart
+  const months=[];for(let i=5;i>=0;i--){const d=new Date();d.setDate(1);d.setMonth(d.getMonth()-i);months.push(d.toISOString().slice(0,7));}
+  const data=months.map(m=>{const l=txns.filter(t=>t.date.startsWith(m));return {m,cr:sum(l.filter(isCredit).map(t=>t.amount)),dr:sum(l.filter(t=>!isCredit(t)).map(t=>t.amount))};});
+  const max=Math.max(1,...data.map(d=>Math.max(d.cr,d.dr)));
+  return {title:`${greet}, ${S.user.name.split(' ')[0]} 👋`,sub:'Here\'s your financial overview for today',
+  api:['GET /api/accounts/my','GET /api/transactions/recent','GET /api/loans/my'],
+  html:`<div class="grid g4">
+    ${stat('Total balance',fmt(total),`across ${accs.length} account${accs.length!==1?'s':''}`,'blue','₹')}
+    ${stat('Credits this month',fmt(cr),`${mt.filter(isCredit).length} transactions`,'green','↓')}
+    ${stat('Debits this month',fmt(dr),`${mt.filter(t=>!isCredit(t)).length} transactions`,'red','↑')}
+    ${stat('Active loans',loans.length,loans.length?`EMI ${fmt(sum(loans.map(l=>l.emi)))}/mo`:'No active loans','amber','◷')}
+  </div>
+  <div class="grid g2-1">
+    <div class="card"><div class="card-h"><h3>Your accounts</h3><a href="#accounts">Manage accounts →</a></div>
+      ${accs.length?`<div class="acct-cards">${accs.map(acctCard).join('')}</div>`:'<div class="empty">No accounts yet</div>'}</div>
+    <div class="card"><div class="card-h"><h3>Quick actions</h3></div><div class="qa">
+      <a href="#deposit" onclick="S.ui.dwTab='deposit'"><span class="q c-green">＋</span>Deposit</a>
+      <a href="#deposit" onclick="S.ui.dwTab='withdraw'"><span class="q c-red">−</span>Withdraw</a>
+      <a href="#transfer"><span class="q c-blue">⇄</span>Transfer</a>
+      <a href="#loans"><span class="q c-violet">₹</span>Apply loan</a>
+    </div></div>
+  </div>
+  <div class="grid g2-1">
+    <div class="card"><div class="card-h"><h3>Recent transactions</h3><a href="#history">View all →</a></div>${txnTable(txns.slice(0,6))}</div>
+    <div class="card"><div class="card-h"><h3>Money in vs out</h3><div class="legend"><span class="l1">In</span><span class="l2">Out</span></div></div>
+      <div class="chart">${data.map(d=>`<div class="col"><div class="bars"><div class="bar cr" style="height:${d.cr/max*100}%" title="In: ${fmt0(d.cr)}"></div><div class="bar dr" style="height:${d.dr/max*100}%" title="Out: ${fmt0(d.dr)}"></div></div><div class="m">${new Date(d.m+'-01').toLocaleString('en-IN',{month:'short'})}</div></div>`).join('')}</div>
+      <p class="help" style="margin-top:12px">Last 6 months · hover a bar for the amount</p></div>
+  </div>`};
+};
+
+PAGES.accounts=()=>{
+  const accs=myAccs();
+  return {title:'My Accounts',sub:'Create, view, freeze or close your bank accounts',
+  api:['GET /api/accounts/my','POST /api/accounts','PUT /api/accounts/{no}/status','DELETE /api/accounts/{no}'],
+  html:`<div class="grid g2-1">
+   <div class="card"><div class="card-h"><h3>All accounts (${accs.length})</h3></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Account no.</th><th>Type</th><th>Balance</th><th>Status</th><th>Opened</th><th>Actions</th></tr></thead><tbody>
+    ${accs.map(a=>`<tr><td class="mono">${a.no}</td><td>${a.type}</td><td><b>${fmt(a.balance)}</b></td><td>${statusBadge(a.status)}</td><td>${dt(a.opened)}</td>
+      <td class="acts"><button class="btn btn-ghost btn-sm" onclick="viewAcc('${a.no}')">View</button>
+      <button class="btn btn-ghost btn-sm" onclick="toggleFreeze('${a.no}')">${a.status==='FROZEN'?'Unfreeze':'Freeze'}</button>
+      <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="closeAcc('${a.no}')">Close</button></td></tr>`).join('')||'<tr><td colspan="6" class="empty">No accounts</td></tr>'}
+    </tbody></table></div>
+    <div class="acct-cards" style="margin-top:18px">${accs.map(acctCard).join('')}</div>
+   </div>
+   <div class="card"><div class="card-h"><h3>Open new account</h3></div>
+    <form onsubmit="createAcc(event)">
+      ${field('Account type','<select id="nType" onchange="$(\'#nMin\').textContent=this.value===\'SAVINGS\'?\'₹1,000\':\'₹5,000\'"><option value="SAVINGS">Savings — 3.5% p.a. interest</option><option value="CURRENT">Current — for business</option></select>')}
+      ${field('Initial deposit (₹)','<input id="nDep" type="number" min="0" value="10000" required>','Minimum balance: <b id="nMin">₹1,000</b>')}
+      ${field('Fund from','<select id="nFrom"><option value="">Cash at branch / UPI</option>'+accOptions('')+'</select>','Optionally move money from an existing account')}
+      ${field('Nominee name','<input id="nNom" placeholder="e.g. Sunita Sharma">')}
+      <div id="nErr" class="err"></div>
+      <button class="btn btn-primary btn-block">Create account</button>
+    </form></div></div>`};
+};
+function createAcc(ev){ev.preventDefault();
+  const type=$('#nType').value, dep=+$('#nDep').value, from=$('#nFrom').value, err=m=>$('#nErr').textContent=m;
+  if(dep<MIN_BAL[type]) return err(`Initial deposit must be at least ${fmt0(MIN_BAL[type])}`);
+  if(from){const f=acc(from); if(f.balance-dep<MIN_BAL[f.type]) return err('Insufficient balance in source account');}
+  const no='NB1'+String(Math.floor(Math.random()*9e6)+1e6);
+  S.accounts.push({no,userId:S.user.id,type,balance:0,status:'ACTIVE',opened:new Date().toISOString().slice(0,10),ifsc:'NOVA0001023',branch:'Patna Main',nominee:$('#nNom').value||'—'});
+  if(from) addTxn(from,'TRANSFER_OUT',dep,'Funding new account '+no,'INTERNAL');
+  addTxn(no,from?'TRANSFER_IN':'DEPOSIT',dep,'Account opening deposit',from?'INTERNAL':'CASH');
+  toast(`${type} account ${no} created (201 Created)`,'ok'); render();
+}
+function viewAcc(no){const a=acc(no),u=userOf(a.userId),n=S.txns.filter(t=>t.accNo===no).length;
+  openModal(`${modalHead('Account details')}${acctCard(a)}<dl class="kv" style="margin-top:18px">
+  <dt>Account holder</dt><dd>${esc(u.name)}</dd><dt>Account number</dt><dd class="mono">${a.no}</dd><dt>Type</dt><dd>${a.type}</dd>
+  <dt>IFSC</dt><dd class="mono">${a.ifsc}</dd><dt>Branch</dt><dd>${a.branch}</dd><dt>Status</dt><dd>${statusBadge(a.status)}</dd>
+  <dt>Minimum balance</dt><dd>${fmt0(MIN_BAL[a.type])}</dd><dt>Nominee</dt><dd>${esc(a.nominee)}</dd><dt>Opened on</dt><dd>${dt(a.opened)}</dd><dt>Total transactions</dt><dd>${n}</dd></dl>
+  <div class="modal-f">${apiPill('GET /api/accounts/'+no)}<button class="btn btn-primary" onclick="closeModal();S.ui.balAcc='${no}';go('balance')">Check balance</button></div>`);}
+function toggleFreeze(no){const a=acc(no);a.status=a.status==='FROZEN'?'ACTIVE':'FROZEN';toast(`Account ${mask(no)} is now ${a.status}`,'ok');render();}
+function closeAcc(no){const a=acc(no);
+  if(a.balance>0){openModal(`${modalHead('Cannot close account')}<p>Account <b class="mono">${no}</b> still has <b>${fmt(a.balance)}</b>.</p><p class="muted" style="margin-top:8px">Withdraw or transfer the full balance first. The API returns <span class="mono">400 Bad Request — BALANCE_NOT_ZERO</span>.</p><div class="modal-f"><button class="btn btn-ghost" onclick="closeModal()">OK</button><button class="btn btn-primary" onclick="closeModal();go('transfer')">Transfer balance</button></div>`);return;}
+  openModal(`${modalHead('Close account?')}<p>This will permanently close <b class="mono">${no}</b>.</p><div class="modal-f"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-danger" onclick="acc('${no}').status='CLOSED';closeModal();toast('Account closed','ok');render()">Close account</button></div>`);}
+
+PAGES.deposit=()=>{
+  const tab=S.ui.dwTab, dep=tab==='deposit', first=myAccs().find(a=>a.status==='ACTIVE');
+  return {title:'Deposit / Withdraw',sub:'Add money to or take money out of your account',
+  api:['POST /api/transactions/deposit','POST /api/transactions/withdraw'],
+  html:`<div class="tabs"><button class="${dep?'on':''}" onclick="S.ui.dwTab='deposit';render()">＋ Deposit</button><button class="${!dep?'on':''}" onclick="S.ui.dwTab='withdraw';render()">− Withdraw</button></div>
+  <div class="grid g3-2"><div class="card"><form onsubmit="doDW(event)">
+    ${field('Account','<select id="dwAcc" onchange="dwPreview()">'+accOptions(first&&first.no)+'</select>','Frozen accounts are hidden')}
+    ${field('Amount (₹)','<input id="dwAmt" type="number" min="1" step="0.01" required placeholder="0.00" oninput="dwPreview()"><div class="chips">'+[500,1000,2000,5000,10000].map(v=>`<button type="button" class="chip" onclick="$('#dwAmt').value=${v};dwPreview()">${fmt0(v)}</button>`).join('')+'</div>')}
+    <div class="row2">${field('Mode',`<select id="dwMode">${(dep?['CASH','UPI','CHEQUE','NEFT']:['ATM','CASH','CHEQUE']).map(m=>`<option>${m}</option>`).join('')}</select>`)}${field('Remark','<input id="dwRem" placeholder="Optional">')}</div>
+    <div id="dwErr" class="err"></div>
+    <button class="btn ${dep?'btn-success':'btn-danger'} btn-block">${dep?'Deposit money':'Withdraw money'}</button>
+  </form></div>
+  <div><div class="card" style="margin-bottom:16px"><h3 style="margin-bottom:12px">Preview</h3><dl class="kv" id="dwPrev"></dl></div>
+  <div class="card"><h3 style="margin-bottom:6px">Rules (validated in service layer)</h3><ul class="info-list">
+    <li>✓ Amount must be greater than ₹0</li><li>✓ Savings min balance ${fmt0(MIN_BAL.SAVINGS)}, Current ${fmt0(MIN_BAL.CURRENT)}</li>
+    <li>✓ Daily withdrawal limit ${fmt0(DAILY_WITHDRAW)} per account</li><li>✓ Frozen / closed accounts are blocked</li><li>✓ <span class="mono">@Transactional</span> — balance + txn saved atomically</li></ul></div></div></div>`,
+  after:dwPreview};
+};
+function dwPreview(){const a=acc($('#dwAcc')?.value);if(!a){$('#dwPrev').innerHTML='<dd class="muted">No active account</dd>';return;}
+  const amt=+$('#dwAmt').value||0, dep=S.ui.dwTab==='deposit', after=dep?a.balance+amt:a.balance-amt;
+  $('#dwPrev').innerHTML=`<dt>Current balance</dt><dd>${fmt(a.balance)}</dd><dt>${dep?'Deposit':'Withdraw'}</dt><dd class="${dep?'amt-cr':'amt-dr'}">${dep?'+':'−'} ${fmt(amt)}</dd><dt>Balance after</dt><dd style="color:${after<MIN_BAL[a.type]?'var(--red)':'inherit'}">${fmt(after)}</dd><dt>Min. balance</dt><dd class="muted">${fmt0(MIN_BAL[a.type])}</dd>`;}
+function doDW(ev){ev.preventDefault();
+  const no=$('#dwAcc').value, a=acc(no), amt=+$('#dwAmt').value, dep=S.ui.dwTab==='deposit', err=m=>$('#dwErr').textContent=m;
+  if(!a) return err('Select an account');
+  if(!(amt>0)) return err('Enter a valid amount');
+  if(!dep){
+    if(a.balance-amt<MIN_BAL[a.type]) return err(`Insufficient funds — must keep minimum balance of ${fmt0(MIN_BAL[a.type])} (422 INSUFFICIENT_BALANCE)`);
+    const td=new Date().toISOString().slice(0,10), used=sum(S.txns.filter(t=>t.accNo===no&&t.type==='WITHDRAW'&&t.date.startsWith(td)).map(t=>t.amount));
+    if(used+amt>DAILY_WITHDRAW) return err(`Daily limit exceeded — ${fmt0(DAILY_WITHDRAW-used)} left today`);
+  }
+  const t=addTxn(no,dep?'DEPOSIT':'WITHDRAW',amt,$('#dwRem').value||(dep?'Deposit':'Withdrawal'),$('#dwMode').value);
+  receipt(dep?'Deposit successful':'Withdrawal successful',t,[['Account',a.no],['Mode',t.mode],['New balance',fmt(a.balance)]]);
+  render();
+}
+function receipt(title,t,rows){openModal(`<div class="receipt"><div class="tick">✓</div><h3>${title}</h3><div class="ramt">${fmt(t.amount)}</div>
+  <dl class="kv"><dt>Reference</dt><dd class="mono">${t.id}</dd><dt>Date & time</dt><dd>${dtt(t.date)}</dd>${rows.map(r=>`<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join('')}<dt>Status</dt><dd>${statusBadge('SUCCESS')}</dd></dl>
+  <div class="modal-f" style="justify-content:center"><button class="btn btn-ghost" onclick="closeModal();go('history')">View history</button><button class="btn btn-primary" onclick="closeModal()">Done</button></div></div>`);}
+
+PAGES.transfer=()=>{
+  const recent=myTxns().filter(t=>t.type==='TRANSFER_OUT').slice(0,5);
+  const own=myAccs().filter(a=>a.status==='ACTIVE');
+  const bens=[...own.map(a=>({no:a.no,name:'Own · '+a.type})),{no:'NB10031207',name:'Priya Verma'},{no:'NB10034589',name:'Amit Kumar'}];
+  return {title:'Money Transfer',sub:'Send money instantly to any NovaBank account',
+  api:['GET /api/accounts/lookup/{no}','POST /api/transactions/transfer'],
+  html:`<div class="grid g3-2"><div class="card"><form onsubmit="submitTransfer(event)">
+    ${field('From account','<select id="tFrom">'+accOptions(own[0]&&own[0].no)+'</select>')}
+    ${field('To account number','<input id="tTo" required placeholder="NB1XXXXXXX" oninput="lookupBen()" class="mono" style="font-size:14px">','<span id="tBen"></span>')}
+    <div class="chips" style="margin:-6px 0 14px"><span class="muted" style="font-size:12px;align-self:center">Saved:</span>${bens.map(b=>`<button type="button" class="chip" onclick="$('#tTo').value='${b.no}';lookupBen()">${b.name}</button>`).join('')}</div>
+    <div class="row2">${field('Amount (₹)','<input id="tAmt" type="number" min="1" step="0.01" required placeholder="0.00">')}${field('Transfer mode','<select id="tMode"><option value="IMPS">IMPS — instant, up to ₹5L</option><option value="NEFT">NEFT — 30 min batches</option><option value="RTGS">RTGS — ₹2L and above</option><option value="UPI">UPI — up to ₹1L</option></select>')}</div>
+    ${field('Remark','<input id="tRem" placeholder="e.g. Rent for November" maxlength="60">')}
+    <div id="tErr" class="err"></div>
+    <button class="btn btn-primary btn-block">Continue →</button>
+  </form></div>
+  <div><div class="card" style="margin-bottom:16px"><h3 style="margin-bottom:6px">Transfer limits</h3><ul class="info-list">
+    <li><b style="width:60px">UPI</b> ₹1 – ₹1,00,000</li><li><b style="width:60px">IMPS</b> ₹1 – ₹5,00,000</li><li><b style="width:60px">NEFT</b> No upper limit</li><li><b style="width:60px">RTGS</b> Minimum ₹2,00,000</li></ul></div>
+  <div class="card"><h3 style="margin-bottom:10px">Recent transfers</h3>${recent.length?recent.map(t=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed var(--line)"><div><b style="font-size:13px">${esc(t.desc)}</b><div class="help" style="margin:0">${dt(t.date)} · ${t.mode}</div></div><span class="amt-dr">− ${fmt0(t.amount)}</span></div>`).join(''):'<div class="muted">No transfers yet</div>'}</div></div></div>`};
+};
+function lookupBen(){const v=$('#tTo').value.trim().toUpperCase(), el=$('#tBen');
+  if(v.length<10){el.innerHTML='';return;}
+  const a=acc(v);
+  if(!a||a.status==='CLOSED') el.innerHTML='<div class="ben-bad">✕ Account not found (404)</div>';
+  else if(a.status==='FROZEN') el.innerHTML=`<div class="ben-bad">✕ ${esc(userOf(a.userId).name)} — account is frozen</div>`;
+  else el.innerHTML=`<div class="ben-ok">✓ ${esc(userOf(a.userId).name)} · ${a.type} · ${a.branch}</div>`;}
+let pendingTransfer=null;
+function submitTransfer(ev){ev.preventDefault();
+  const from=$('#tFrom').value, to=$('#tTo').value.trim().toUpperCase(), amt=+$('#tAmt').value, mode=$('#tMode').value, err=m=>$('#tErr').textContent=m;
+  const f=acc(from), d=acc(to);
+  if(!f) return err('Select a source account');
+  if(!d||d.status==='CLOSED') return err('Beneficiary account not found');
+  if(from===to) return err('Source and destination cannot be the same');
+  if(d.status==='FROZEN') return err('Beneficiary account is frozen');
+  if(!(amt>0)) return err('Enter a valid amount');
+  if(mode==='RTGS'&&amt<200000) return err('RTGS requires minimum ₹2,00,000');
+  if(mode==='UPI'&&amt>100000) return err('UPI limit is ₹1,00,000');
+  if(mode==='IMPS'&&amt>500000) return err('IMPS limit is ₹5,00,000');
+  if(f.balance-amt<MIN_BAL[f.type]) return err(`Insufficient funds — available to transfer: ${fmt(Math.max(0,f.balance-MIN_BAL[f.type]))}`);
+  pendingTransfer={from,to,amt,mode,rem:$('#tRem').value};
+  const bn=userOf(d.userId).name;
+  openModal(`${modalHead('Confirm transfer')}<dl class="kv" style="background:#f8fafc;padding:14px;border-radius:10px">
+   <dt>From</dt><dd class="mono">${from}</dd><dt>To</dt><dd>${esc(bn)}<br><span class="mono muted">${to}</span></dd><dt>Mode</dt><dd>${mode}</dd><dt>Remark</dt><dd>${esc(pendingTransfer.rem)||'—'}</dd><dt>Amount</dt><dd style="font-size:20px">${fmt(amt)}</dd></dl>
+   <div class="field" style="margin-top:18px"><label>Enter 4-digit transaction PIN</label><input id="pin" class="pin" type="password" maxlength="4" inputmode="numeric" placeholder="••••" autofocus><div class="help">Demo PIN is <b>1234</b></div></div>
+   <div id="pinErr" class="err"></div>
+   <div class="modal-f"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="confirmTransfer()">Transfer ${fmt0(amt)}</button></div>`);
+  setTimeout(()=>$('#pin')&&$('#pin').focus(),50);
+}
+function confirmTransfer(){
+  if($('#pin').value!==S.pin){$('#pinErr').textContent='Incorrect PIN (403 Forbidden)';return;}
+  const p=pendingTransfer, d=acc(p.to), sender=S.user.name, bn=userOf(d.userId).name;
+  const t=addTxn(p.from,'TRANSFER_OUT',p.amt,p.rem||('To '+bn),p.mode);
+  addTxn(p.to,'TRANSFER_IN',p.amt,'From '+sender+(p.rem?' — '+p.rem:''),p.mode);
+  receipt('Transfer successful',t,[['Paid to',esc(bn)],['To account',p.to],['Mode',p.mode],['Balance left',fmt(acc(p.from).balance)]]);
+  pendingTransfer=null; render();
+}
+
+PAGES.history=()=>{
+  const h=S.ui.hist;
+  return {title:'Transaction History',sub:'Search, filter and export all your transactions',
+  api:['GET /api/transactions?accountNo=&type=&from=&to=&page=&size=','GET /api/transactions/export'],
+  html:`<div class="card"><div class="filters">
+    ${field('Account',`<select id="hAcc" onchange="histF()"><option value="">All accounts</option>${myAccs().map(a=>`<option value="${a.no}" ${h.acc===a.no?'selected':''}>${a.type} · ${mask(a.no)}</option>`).join('')}</select>`)}
+    ${field('Type',`<select id="hType" onchange="histF()"><option value="">All types</option>${['DEPOSIT','WITHDRAW','TRANSFER_IN','TRANSFER_OUT','LOAN_CREDIT','INTEREST'].map(t=>`<option ${h.type===t?'selected':''}>${t}</option>`).join('')}</select>`)}
+    ${field('From date',`<input id="hFrom" type="date" value="${h.from}" onchange="histF()">`)}
+    ${field('To date',`<input id="hTo" type="date" value="${h.to}" onchange="histF()">`)}
+    ${field('Search',`<input id="hQ" placeholder="Description or Txn ID" value="${esc(h.q)}" oninput="histF()">`)}
+    <div style="display:flex;gap:6px"><button class="btn btn-ghost" onclick="S.ui.hist={acc:'',type:'',from:'',to:'',q:'',page:1};render()">Reset</button><button class="btn btn-primary" onclick="exportCSV()">⤓ CSV</button></div>
+  </div><div id="hSum" class="grid g3" style="margin-bottom:14px"></div><div id="hTbl"></div></div>`,
+  after:histTable};
+};
+function histF(){const h=S.ui.hist;h.acc=$('#hAcc').value;h.type=$('#hType').value;h.from=$('#hFrom').value;h.to=$('#hTo').value;h.q=$('#hQ').value;h.page=1;histTable();}
+function histFiltered(){const h=S.ui.hist,q=h.q.toLowerCase();
+  return myTxns().filter(t=>(!h.acc||t.accNo===h.acc)&&(!h.type||t.type===h.type)&&(!h.from||t.date.slice(0,10)>=h.from)&&(!h.to||t.date.slice(0,10)<=h.to)&&(!q||t.desc.toLowerCase().includes(q)||t.id.toLowerCase().includes(q)));}
+function histTable(){const list=histFiltered(),h=S.ui.hist,size=8,pages=Math.max(1,Math.ceil(list.length/size));h.page=Math.min(h.page,pages);
+  const cr=sum(list.filter(isCredit).map(t=>t.amount)),dr=sum(list.filter(t=>!isCredit(t)).map(t=>t.amount));
+  $('#hSum').innerHTML=`<div class="card stat" style="box-shadow:none;background:#fafbfd"><div class="lbl">Total credits</div><div class="val amt-cr" style="font-size:20px">${fmt(cr)}</div></div><div class="card stat" style="box-shadow:none;background:#fafbfd"><div class="lbl">Total debits</div><div class="val amt-dr" style="font-size:20px">${fmt(dr)}</div></div><div class="card stat" style="box-shadow:none;background:#fafbfd"><div class="lbl">Net flow</div><div class="val" style="font-size:20px">${fmt(cr-dr)}</div></div>`;
+  $('#hTbl').innerHTML=txnTable(list.slice((h.page-1)*size,h.page*size))+`<div class="pager"><span>Showing ${list.length?(h.page-1)*size+1:0}–${Math.min(h.page*size,list.length)} of ${list.length}</span><div class="btns"><button class="btn btn-ghost btn-sm" ${h.page<=1?'disabled':''} onclick="S.ui.hist.page--;histTable()">← Prev</button><span style="padding:5px 8px">Page ${h.page} / ${pages}</span><button class="btn btn-ghost btn-sm" ${h.page>=pages?'disabled':''} onclick="S.ui.hist.page++;histTable()">Next →</button></div></div>`;}
+function exportCSV(){const rows=[['TxnID','Date','Account','Type','Mode','Description','Amount','BalanceAfter']].concat(histFiltered().map(t=>[t.id,t.date,t.accNo,t.type,t.mode,'"'+t.desc.replace(/"/g,'""')+'"',t.amount,t.balanceAfter]));
+  try{const b=new Blob([rows.map(r=>r.join(',')).join('\n')],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='statement.csv';a.click();toast('statement.csv downloaded','ok');}catch(e){toast('Download blocked in this preview','bad');}}
+
+PAGES.balance=()=>{
+  const accs=myAccs(); if(!S.ui.balAcc||!accs.some(a=>a.no===S.ui.balAcc)) S.ui.balAcc=accs[0]&&accs[0].no;
+  const a=acc(S.ui.balAcc);
+  if(!a) return {title:'Balance Inquiry',html:'<div class="card empty">No accounts</div>'};
+  const mini=S.txns.filter(t=>t.accNo===a.no).slice(0,5), hold=a.status==='FROZEN'?a.balance:0;
+  return {title:'Balance Inquiry',sub:'Real-time balance and mini statement',
+  api:['GET /api/accounts/{no}/balance','GET /api/accounts/{no}/mini-statement'],
+  html:`<div class="chips" style="margin:0 0 16px">${accs.map(x=>`<button class="chip ${x.no===a.no?'on':''}" onclick="S.ui.balAcc='${x.no}';render()">${x.type} · ${mask(x.no)}</button>`).join('')}</div>
+  <div class="grid g2">
+   <div class="bal-hero"><div class="sm">${a.type} ACCOUNT · ${a.no}</div><div class="sm" style="margin-top:14px">Available balance</div>
+    <div class="big" id="balBig">${fmt(a.balance-hold)}</div><div class="sm" id="balTime">Updated ${new Date().toLocaleTimeString('en-IN')}</div>
+    <div class="split"><div><span class="sm">Ledger balance</span><b>${fmt(a.balance)}</b></div><div><span class="sm">On hold</span><b>${fmt(hold)}</b></div><div><span class="sm">Withdrawable</span><b>${fmt(Math.max(0,a.balance-hold-MIN_BAL[a.type]))}</b></div></div>
+    <button class="btn" style="margin-top:20px;background:rgba(255,255,255,.15);color:#fff" onclick="refreshBal(this)">↻ Refresh balance</button></div>
+   <div class="card"><h3 style="margin-bottom:12px">Account summary</h3><dl class="kv">
+    <dt>Holder</dt><dd>${esc(S.user.name)}</dd><dt>Status</dt><dd>${statusBadge(a.status)}</dd><dt>IFSC</dt><dd class="mono">${a.ifsc}</dd><dt>Branch</dt><dd>${a.branch}</dd>
+    <dt>Minimum balance</dt><dd>${fmt0(MIN_BAL[a.type])}</dd><dt>Interest rate</dt><dd>${a.type==='SAVINGS'?'3.5% p.a.':'—'}</dd><dt>Opened</dt><dd>${dt(a.opened)}</dd></dl></div>
+  </div>
+  <div class="card"><div class="card-h"><h3>Mini statement — last 5 transactions</h3><a href="#history" onclick="S.ui.hist.acc='${a.no}'">Full statement →</a></div>${txnTable(mini,false)}</div>`};
+};
+function refreshBal(btn){btn.innerHTML='<span class="spin"></span> Fetching…';btn.disabled=true;setTimeout(()=>{btn.innerHTML='↻ Refresh balance';btn.disabled=false;$('#balTime').textContent='Updated '+new Date().toLocaleTimeString('en-IN');toast('Balance refreshed (200 OK)','ok');},800);}
+
+PAGES.loans=()=>{
+  const loans=myLoans();
+  return {title:'Loans',sub:'Calculate EMI, check eligibility and apply in minutes',
+  api:['POST /api/loans/apply','GET /api/loans/my','GET /api/loans/{id}/schedule'],
+  html:`<div class="grid g4">${Object.entries(LOAN_TYPES).map(([k,v])=>`<div class="card stat" style="cursor:pointer" onclick="$('#lnType').value='${k}';lnCalc()"><div class="lbl">${v.label}</div><div class="val" style="font-size:20px">${v.rate}% p.a.</div><div class="hint">Up to ${fmt0(v.max)}</div></div>`).join('')}</div>
+  <div class="grid g1-2">
+   <div class="card"><h3 style="margin-bottom:14px">Apply for a loan</h3><form onsubmit="applyLoan(event)">
+    ${field('Loan type',`<select id="lnType" onchange="lnCalc()">${Object.entries(LOAN_TYPES).map(([k,v])=>`<option value="${k}">${v.label} — ${v.rate}%</option>`).join('')}</select>`)}
+    ${field('Loan amount <span class="range-val" id="lnAmtV"></span>','<input id="lnAmt" type="range" min="50000" max="1500000" step="10000" value="500000" oninput="lnCalc()">')}
+    ${field('Tenure <span class="range-val" id="lnTenV"></span>','<input id="lnTen" type="range" min="6" max="84" step="6" value="36" oninput="lnCalc()">')}
+    <div class="row2">${field('Monthly income (₹)','<input id="lnInc" type="number" value="85000" min="0" oninput="lnCalc()" required>')}${field('Employment','<select id="lnEmp"><option>Salaried</option><option>Self-employed</option><option>Business</option></select>')}</div>
+    <div class="emi-box"><div class="muted" style="font-size:12.5px">Monthly EMI</div><div class="e" id="lnEmi">—</div>
+     <div class="emi-grid"><div>Principal<b id="lnP">—</b></div><div>Total interest<b id="lnI">—</b></div><div>Total payable<b id="lnT">—</b></div><div>Interest rate<b id="lnR">—</b></div></div><div class="elig" id="lnEl"></div></div>
+    ${field('Purpose','<input id="lnPur" required placeholder="e.g. Home renovation">')}
+    ${field('Credit to account','<select id="lnAcc">'+accOptions('')+'</select>')}
+    <button class="btn btn-primary btn-block" id="lnBtn">Submit application</button></form></div>
+   <div class="card"><div class="card-h"><h3>My loan applications</h3><span class="muted">${loans.length} total</span></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Loan ID</th><th>Type</th><th>Amount</th><th>Tenure</th><th>EMI</th><th>Applied</th><th>Status</th><th></th></tr></thead><tbody>
+    ${loans.map(l=>`<tr><td class="mono">${l.id}</td><td>${LOAN_TYPES[l.type].label}</td><td><b>${fmt0(l.amount)}</b></td><td>${l.tenure} mo</td><td>${fmt(l.emi)}</td><td>${dt(l.applied)}</td><td>${statusBadge(l.status)}</td><td><button class="btn btn-ghost btn-sm" onclick="loanSchedule('${l.id}')">Schedule</button></td></tr>`).join('')||'<tr><td colspan="8" class="empty">No applications yet</td></tr>'}
+    </tbody></table></div>
+    <div style="margin-top:18px;padding:14px;background:#f8fafc;border-radius:10px;font-size:13px"><b>Loan lifecycle:</b> <span class="badge b-amber">PENDING</span> → admin reviews → <span class="badge b-green">APPROVED</span> (amount credited) or <span class="badge b-red">REJECTED</span>. <span class="muted">Login as Admin to approve.</span></div></div>
+  </div>`,
+  after:lnCalc};
+};
+function lnCalc(){const t=LOAN_TYPES[$('#lnType').value], amtEl=$('#lnAmt'); amtEl.max=t.max; if(+amtEl.value>t.max) amtEl.value=t.max;
+  const P=+amtEl.value, n=+$('#lnTen').value, inc=+$('#lnInc').value||0, e=emi(P,t.rate,n), tot=e*n;
+  $('#lnAmtV').textContent=fmt0(P); $('#lnTenV').textContent=n+' months'; $('#lnEmi').textContent=fmt(e);
+  $('#lnP').textContent=fmt0(P); $('#lnI').textContent=fmt0(tot-P); $('#lnT').textContent=fmt0(tot); $('#lnR').textContent=t.rate+'% p.a.';
+  const ok=inc>0&&e<=inc*0.5; $('#lnEl').innerHTML=ok?`<span style="color:var(--green)">✓ Eligible — EMI is ${(e/inc*100).toFixed(0)}% of income (limit 50%)</span>`:`<span style="color:var(--red)">✕ Not eligible — EMI exceeds 50% of monthly income</span>`;
+  $('#lnBtn').disabled=!ok; $('#lnBtn').style.opacity=ok?1:.5;}
+function applyLoan(ev){ev.preventDefault();
+  const type=$('#lnType').value,t=LOAN_TYPES[type],P=+$('#lnAmt').value,n=+$('#lnTen').value;
+  const l={id:'LN'+(1000+S.loans.length+1),userId:S.user.id,type,amount:P,tenure:n,rate:t.rate,income:+$('#lnInc').value,purpose:$('#lnPur').value,creditTo:$('#lnAcc').value,status:'PENDING',applied:new Date().toISOString().slice(0,10),emi:emi(P,t.rate,n)};
+  S.loans.unshift(l); toast(`Application ${l.id} submitted — status PENDING`,'ok'); render();}
+function loanSchedule(id){const l=S.loans.find(x=>x.id===id); let bal=l.amount; const r=l.rate/12/100, rows=[];
+  for(let i=1;i<=Math.min(l.tenure,12);i++){const int=bal*r, pr=l.emi-int; bal=Math.max(0,bal-pr); rows.push(`<tr><td>${i}</td><td>${fmt(l.emi)}</td><td>${fmt(pr)}</td><td>${fmt(int)}</td><td>${fmt(bal)}</td></tr>`);}
+  openModal(`${modalHead(`EMI schedule — ${l.id}`)}<dl class="kv" style="margin-bottom:16px"><dt>${LOAN_TYPES[l.type].label}</dt><dd>${fmt0(l.amount)} @ ${l.rate}% for ${l.tenure} months</dd><dt>Purpose</dt><dd>${esc(l.purpose)}</dd><dt>Status</dt><dd>${statusBadge(l.status)}</dd>${l.reason?`<dt>Reason</dt><dd>${esc(l.reason)}</dd>`:''}</dl>
+  <div class="tbl-wrap"><table><thead><tr><th>#</th><th>EMI</th><th>Principal</th><th>Interest</th><th>Balance</th></tr></thead><tbody>${rows.join('')}</tbody></table></div>
+  ${l.tenure>12?`<p class="help">Showing first 12 of ${l.tenure} instalments</p>`:''}<div class="modal-f">${apiPill('GET /api/loans/'+id+'/schedule')}</div>`,true);}
+
+PAGES.profile=()=>{const u=S.user;
+  return {title:'Profile & Security',sub:'Manage your personal details, password and transaction PIN',
+  api:['GET /api/users/me','PUT /api/users/me','PUT /api/users/me/password','PUT /api/users/me/pin'],
+  html:`<div class="grid g2"><div class="card"><div style="display:flex;gap:14px;align-items:center;margin-bottom:18px"><div class="avatar" style="width:56px;height:56px;font-size:18px;background:var(--pri)">${initials(u.name)}</div><div><h3>${esc(u.name)}</h3><span class="badge b-blue">${u.role}</span></div></div>
+   <form onsubmit="event.preventDefault();S.user.name=$('#pName').value;S.user.phone=$('#pPhone').value;S.user.city=$('#pCity').value;toast('Profile updated (200 OK)','ok');render()">
+   ${field('Full name',`<input id="pName" value="${esc(u.name)}" required>`)}
+   <div class="row2">${field('Email',`<input value="${esc(u.email)}" disabled>`,'Email cannot be changed')}${field('Mobile',`<input id="pPhone" value="${esc(u.phone)}">`)}</div>
+   ${field('City',`<input id="pCity" value="${esc(u.city)}">`)}
+   <p class="help" style="margin-bottom:14px">Customer since ${dt(u.joined)}</p>
+   <button class="btn btn-primary">Save changes</button></form></div>
+  <div><div class="card" style="margin-bottom:16px"><h3 style="margin-bottom:14px">Change password</h3><form onsubmit="chgPass(event)">
+   ${field('Current password','<input id="cp0" type="password" required>')}
+   <div class="row2">${field('New password','<input id="cp1" type="password" minlength="6" required>')}${field('Confirm','<input id="cp2" type="password" required>')}</div>
+   <div id="cpErr" class="err"></div><button class="btn btn-ghost">Update password</button></form></div>
+   <div class="card"><h3 style="margin-bottom:14px">Transaction PIN</h3><form onsubmit="event.preventDefault();if(!/^\\d{4}$/.test($('#np').value)){toast('PIN must be 4 digits','bad');return;}S.pin=$('#np').value;toast('Transaction PIN changed','ok');this.reset()">
+   <div class="row2">${field('New 4-digit PIN','<input id="np" type="password" maxlength="4" class="pin" required>')}<div class="field"><label>&nbsp;</label><button class="btn btn-ghost btn-block">Set PIN</button></div></div>
+   <p class="help">PIN is stored as a BCrypt hash — never in plain text.</p></form></div></div></div>`};
+};
+function chgPass(ev){ev.preventDefault();const e=m=>$('#cpErr').textContent=m;
+  if($('#cp0').value!==S.user.password) return e('Current password is incorrect');
+  if($('#cp1').value!==$('#cp2').value) return e('New passwords do not match');
+  S.user.password=$('#cp1').value; ev.target.reset(); e(''); toast('Password changed — please log in again on other devices','ok');}
+
+/* ---------------- ADMIN ---------------- */
+const customers=()=>S.users.filter(u=>u.role==='CUSTOMER');
+PAGES.admin=()=>{
+  const pend=S.loans.filter(l=>l.status==='PENDING'), deposits=sum(S.accounts.filter(a=>a.status!=='CLOSED').map(a=>a.balance));
+  const td=new Date().toISOString().slice(0,10), today=S.txns.filter(t=>t.date.startsWith(td));
+  const disbursed=sum(S.loans.filter(l=>l.status==='APPROVED').map(l=>l.amount));
+  const byType=['DEPOSIT','WITHDRAW','TRANSFER_OUT','TRANSFER_IN'].map(k=>({k,v:sum(S.txns.filter(t=>t.type===k).map(t=>t.amount))})); const mx=Math.max(...byType.map(x=>x.v));
+  return {title:'Admin Dashboard',sub:'Bank-wide overview · ROLE_ADMIN only',
+  api:['GET /api/admin/stats','GET /api/admin/loans?status=PENDING'],
+  html:`<div class="grid g4">${stat('Total customers',customers().length,`${S.accounts.filter(a=>a.status!=='CLOSED').length} accounts`,'blue','☷')}${stat('Total deposits',fmt0(deposits),'all active accounts','green','₹')}${stat('Pending loans',pend.length,fmt0(sum(pend.map(l=>l.amount)))+' requested','amber','◷')}${stat('Loans disbursed',fmt0(disbursed),`${today.length} txns today`,'violet','✓')}</div>
+  <div class="grid g2-1"><div class="card"><div class="card-h"><h3>Pending loan approvals</h3><a href="#approvals">Open queue →</a></div>${loanQueue(pend.slice(0,4))}</div>
+   <div class="card"><h3 style="margin-bottom:14px">Volume by transaction type</h3>${byType.map(x=>`<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:12.5px"><span>${x.k.replace('_',' ')}</span><b>${fmt0(x.v)}</b></div><div style="height:8px;background:#eef1f6;border-radius:4px;margin-top:5px"><div style="height:100%;width:${x.v/mx*100}%;background:${isCredit({type:x.k})?'#3b82f6':'#94a3b8'};border-radius:4px"></div></div></div>`).join('')}</div></div>
+  <div class="card"><div class="card-h"><h3>Latest transactions (all customers)</h3><a href="#alltxns">View all →</a></div>${txnTable(S.txns.slice(0,6))}</div>`};
+};
+function loanQueue(list){if(!list.length) return '<div class="empty">🎉 No pending applications</div>';
+  return `<div class="tbl-wrap"><table><thead><tr><th>Loan</th><th>Customer</th><th>Type</th><th>Amount</th><th>EMI / Income</th><th>Actions</th></tr></thead><tbody>${list.map(l=>{const u=userOf(l.userId),ratio=l.emi/l.income*100;
+   return `<tr><td class="mono">${l.id}<div class="help" style="margin:0">${dt(l.applied)}</div></td><td><b>${esc(u.name)}</b><div class="help" style="margin:0">${esc(l.purpose)}</div></td><td>${LOAN_TYPES[l.type].label}</td><td><b>${fmt0(l.amount)}</b><div class="help" style="margin:0">${l.tenure} mo @ ${l.rate}%</div></td>
+   <td><span class="badge ${ratio<=50?'b-green':'b-red'}">${ratio.toFixed(0)}%</span><div class="help" style="margin:0">${fmt0(l.emi)} / ${fmt0(l.income)}</div></td>
+   <td class="acts"><button class="btn btn-success btn-sm" onclick="decideLoan('${l.id}','APPROVED')">Approve</button><button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="rejectLoan('${l.id}')">Reject</button></td></tr>`;}).join('')}</tbody></table></div>`;}
+function decideLoan(id,st,reason){const l=S.loans.find(x=>x.id===id); l.status=st; l.decided=new Date().toISOString().slice(0,10); if(reason) l.reason=reason;
+  if(st==='APPROVED'){const target=(l.creditTo&&acc(l.creditTo))||S.accounts.find(a=>a.userId===l.userId&&a.status==='ACTIVE'); if(target) addTxn(target.no,'LOAN_CREDIT',l.amount,`Loan disbursal ${l.id}`,'SYSTEM');
+    toast(`${id} approved — ${fmt0(l.amount)} credited${target?' to '+mask(target.no):''}`,'ok');} else toast(`${id} rejected`,'bad');
+  closeModal(); render();}
+function rejectLoan(id){openModal(`${modalHead('Reject '+id)}${field('Reason for rejection','<select id="rjR"><option>Income below eligibility</option><option>Low credit score</option><option>Incomplete KYC documents</option><option>High existing liabilities</option></select>')}<div class="modal-f"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-danger" onclick="decideLoan('${id}','REJECTED',$('#rjR').value)">Reject loan</button></div>`);}
+
+PAGES.approvals=()=>{const all=S.loans, pend=all.filter(l=>l.status==='PENDING');
+  return {title:'Loan Approvals',sub:'Review and decide on customer loan applications',
+  api:['GET /api/admin/loans','PUT /api/admin/loans/{id}/approve','PUT /api/admin/loans/{id}/reject'],
+  html:`<div class="card" style="margin-bottom:16px"><div class="card-h"><h3>Pending queue (${pend.length})</h3><span class="help" style="margin:0">Rule: EMI ≤ 50% of monthly income</span></div>${loanQueue(pend)}</div>
+  <div class="card"><div class="card-h"><h3>All applications</h3></div><div class="tbl-wrap"><table><thead><tr><th>Loan ID</th><th>Customer</th><th>Type</th><th>Amount</th><th>Applied</th><th>Decided</th><th>Status</th><th></th></tr></thead><tbody>
+  ${all.map(l=>`<tr><td class="mono">${l.id}</td><td>${esc(userOf(l.userId).name)}</td><td>${LOAN_TYPES[l.type].label}</td><td>${fmt0(l.amount)}</td><td>${dt(l.applied)}</td><td>${l.decided?dt(l.decided):'—'}</td><td>${statusBadge(l.status)}${l.reason?`<div class="help" style="margin:0">${esc(l.reason)}</div>`:''}</td><td><button class="btn btn-ghost btn-sm" onclick="loanSchedule('${l.id}')">Details</button></td></tr>`).join('')}
+  </tbody></table></div></div>`};
+};
+PAGES.customers=()=>({title:'Customers',sub:'All registered customers and their accounts',
+  api:['GET /api/admin/users','GET /api/admin/accounts','PUT /api/admin/accounts/{no}/status'],
+  html:`<div class="card"><div class="tbl-wrap"><table><thead><tr><th>Customer</th><th>Contact</th><th>City</th><th>Joined</th><th>Accounts</th><th>Total balance</th><th>Loans</th></tr></thead><tbody>
+  ${customers().map(u=>{const a=S.accounts.filter(x=>x.userId===u.id&&x.status!=='CLOSED');return `<tr><td><div style="display:flex;gap:10px;align-items:center"><div class="avatar" style="background:var(--pri-l);color:var(--pri)">${initials(u.name)}</div><b>${esc(u.name)}</b></div></td><td>${esc(u.email)}<div class="help" style="margin:0">${esc(u.phone)}</div></td><td>${esc(u.city)}</td><td>${dt(u.joined)}</td><td>${a.length}</td><td><b>${fmt(sum(a.map(x=>x.balance)))}</b></td><td>${S.loans.filter(l=>l.userId===u.id).length}</td></tr>`;}).join('')}
+  </tbody></table></div></div>
+  <div class="card" style="margin-top:16px"><div class="card-h"><h3>All accounts</h3></div><div class="tbl-wrap"><table><thead><tr><th>Account no.</th><th>Holder</th><th>Type</th><th>Branch</th><th>Balance</th><th>Status</th><th>Action</th></tr></thead><tbody>
+  ${S.accounts.filter(a=>a.status!=='CLOSED').map(a=>`<tr><td class="mono">${a.no}</td><td>${esc(userOf(a.userId).name)}</td><td>${a.type}</td><td>${a.branch}</td><td><b>${fmt(a.balance)}</b></td><td>${statusBadge(a.status)}</td><td><button class="btn btn-ghost btn-sm" onclick="toggleFreeze('${a.no}')">${a.status==='FROZEN'?'Unfreeze':'Freeze'}</button></td></tr>`).join('')}
+  </tbody></table></div></div>`});
+PAGES.alltxns=()=>({title:'All Transactions',sub:'Bank-wide transaction ledger',api:['GET /api/admin/transactions?page=&size='],
+  html:`<div class="card">${txnTable(S.txns.slice(0,40))}<p class="help" style="margin-top:10px">Latest 40 of ${S.txns.length} transactions</p></div>`});
+
+/* ---------------- API REFERENCE ---------------- */
+const API_GROUPS=[
+ ['Authentication — AuthController',[['POST','/api/auth/register','Register customer + open first account','Public'],['POST','/api/auth/login','Validate credentials, return JWT','Public'],['POST','/api/auth/refresh','Refresh access token','Auth']]],
+ ['Users — UserController',[['GET','/api/users/me','Current user profile','Auth'],['PUT','/api/users/me','Update profile','Auth'],['PUT','/api/users/me/password','Change password (BCrypt)','Auth'],['PUT','/api/users/me/pin','Set transaction PIN','Auth']]],
+ ['Accounts — AccountController (CRUD)',[['POST','/api/accounts','Create account (min balance check)','Customer'],['GET','/api/accounts/my','List my accounts','Customer'],['GET','/api/accounts/{no}','Account details','Owner'],['GET','/api/accounts/{no}/balance','Balance inquiry','Owner'],['GET','/api/accounts/{no}/mini-statement','Last 5 transactions','Owner'],['GET','/api/accounts/lookup/{no}','Beneficiary name lookup','Customer'],['PUT','/api/accounts/{no}/status','Freeze / unfreeze','Owner/Admin'],['DELETE','/api/accounts/{no}','Close account (balance must be 0)','Owner']]],
+ ['Transactions — TransactionController',[['POST','/api/transactions/deposit','Deposit money','Customer'],['POST','/api/transactions/withdraw','Withdraw (min balance + daily limit)','Customer'],['POST','/api/transactions/transfer','Transfer — @Transactional debit+credit, PIN check','Customer'],['GET','/api/transactions','History with filters + pagination','Customer'],['GET','/api/transactions/recent','Latest 5 for dashboard','Customer'],['GET','/api/transactions/export','Download CSV statement','Customer']]],
+ ['Loans — LoanController',[['POST','/api/loans/apply','Apply (EMI ≤ 50% income)','Customer'],['GET','/api/loans/my','My loan applications','Customer'],['GET','/api/loans/{id}/schedule','Amortization / EMI schedule','Owner/Admin'],['GET','/api/loans/emi-calculator','EMI preview (?amount&rate&tenure)','Public']]],
+ ['Admin — AdminController',[['GET','/api/admin/stats','Dashboard KPIs','Admin'],['GET','/api/admin/users','All customers','Admin'],['GET','/api/admin/accounts','All accounts','Admin'],['GET','/api/admin/transactions','All transactions','Admin'],['GET','/api/admin/loans','Loans (?status=PENDING)','Admin'],['PUT','/api/admin/loans/{id}/approve','Approve + disburse to account','Admin'],['PUT','/api/admin/loans/{id}/reject','Reject with reason','Admin']]],
+];
+PAGES.apis=()=>({title:'API Reference',sub:'REST endpoints the Spring Boot backend should expose for this frontend',
+  html:`<div class="grid g4">${stat('Endpoints',sum(API_GROUPS.map(g=>g[1].length)),'across 6 controllers','blue','⌘')}${stat('Entities','5','User, Account, Transaction, Loan, Role','green','▤')}${stat('Auth','JWT','Spring Security, BCrypt','violet','⚿')}${stat('Tests','JUnit 5','+ Mockito, MockMvc','amber','✓')}</div>
+  <div class="grid g2">${API_GROUPS.map(([g,eps])=>`<div class="card"><h3 style="margin-bottom:6px">${g}</h3>${eps.map(([m,p,d,r])=>`<div class="ep"><span class="meth m-${m}">${m}</span><div><code>${p}</code><div class="d">${d}</div></div><span class="badge ${r==='Public'?'b-gray':r==='Admin'?'b-violet':'b-blue'}">${r}</span></div>`).join('')}</div>`).join('')}</div>
+  <div class="grid g2"><div class="card"><h3 style="margin-bottom:10px">MySQL tables</h3><pre class="mono" style="white-space:pre-wrap;line-height:1.7;color:#334155">users        (id, name, email UNIQUE, password_hash, phone, role, pin_hash, created_at)
+accounts     (account_no PK, user_id FK, type, balance DECIMAL(15,2), status, ifsc, branch, nominee, opened_at)
+transactions (id PK, account_no FK, type, amount, balance_after, mode, description, reference_id, created_at)
+loans        (id PK, user_id FK, type, amount, tenure_months, rate, emi, monthly_income, purpose, status, reason, applied_at, decided_at)</pre></div>
+  <div class="card"><h3 style="margin-bottom:10px">Standard error responses</h3><ul class="info-list">
+   <li><span class="badge b-red">400</span> Validation failed / balance not zero on close</li><li><span class="badge b-red">401</span> Invalid credentials or expired JWT</li><li><span class="badge b-red">403</span> Wrong PIN / accessing another user's account</li><li><span class="badge b-red">404</span> Account or loan not found</li><li><span class="badge b-red">409</span> Email already registered</li><li><span class="badge b-red">422</span> Insufficient balance / limit exceeded</li></ul>
+   <p class="help">Handle all of these in a single <span class="mono">@RestControllerAdvice</span> GlobalExceptionHandler.</p></div></div>`});
+
+render();
+</script>
+</body>
+</html>

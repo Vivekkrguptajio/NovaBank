@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:novabank;MODE=MySQL;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    open-in-view: false
+
+app:
+  jwt:
+    secret: bm92YWJhbmstc3VwZXItc2VjcmV0LWtleS1jaGFuZ2UtbWUtaW4tcHJvZHVjdGlvbi0yMDI2
+    expiration-ms: 3600000
+  seed-demo-data: false
+  cors-origins: http://localhost:3000

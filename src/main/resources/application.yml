@@ -1,0 +1,31 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: novabank
+  datasource:
+    # Override with env vars in Docker (see docker-compose.yml)
+    url: ${DB_URL:jdbc:mysql://localhost:3306/novabank?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Kolkata}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
+  jpa:
+    hibernate:
+      ddl-auto: update          # creates/updates tables automatically from entities
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+
+app:
+  jwt:
+    # Base64 encoded 256-bit key. CHANGE THIS in production (env var JWT_SECRET).
+    secret: ${JWT_SECRET:bm92YWJhbmstc3VwZXItc2VjcmV0LWtleS1jaGFuZ2UtbWUtaW4tcHJvZHVjdGlvbi0yMDI2}
+    expiration-ms: 86400000     # 24 hours
+  seed-demo-data: true          # creates admin + demo customer on first start
+  cors-origins: http://localhost:3000,http://localhost:5173
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
